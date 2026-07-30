@@ -28,13 +28,30 @@
  * see `windowMs`. Without any ceiling, a session left open on a Friday would ping all weekend:
  * ~640 pings ≈ 64x the cost of the single re-warm it was avoiding.
  *
- * BOUNDARY WITH A PIPELINE-SIDE HEARTBEAT (they do not overlap):
+ * SCOPE — INTERACTIVE SESSIONS ONLY, AND THAT IS THE RIGHT SCOPE (measured 2026-07-30):
  * This plugin lives INSIDE the opencode process, so it only reaches sessions of a long-lived
  * process (`opencode serve` / TUI) = interactive conversations. Sessions dispatched by
- * `opencode run` are DETACHED and one-shot — the process exits after the turn and no timer
- * survives. Those need a separate long-lived service that spawns a fresh process to touch the
- * orphaned session. (Note that ../cache-ttl DOES work there, because wrapping `fetch` acts
- * during the request rather than after it.)
+ * `opencode run` are DETACHED and one-shot — the process exits after the turn, no timer survives.
+ *
+ * ⛔ DO NOT build an external service to warm those. It was built, measured and DELETED:
+ *   · NO VALUE — 405 inter-turn gaps across 34 durable pipeline sessions: 98.8% under 5 min,
+ *     0.0% in the 1h-3h band a warmer could serve, 0.7% over 3h. The profile is BIMODAL (burst
+ *     or hours of silence); the pipeline has NO medium idleness. Total saving over that entire
+ *     history: ~US$2.70. Cache warming is a HUMAN-channel problem — which is this plugin.
+ *   · ACTIVE DANGER — the only way to touch a detached session from outside is a second
+ *     `opencode run --session <same>`, and two of those CORRUPT the session IRREVERSIBLY: they
+ *     do not serialize, the contexts cross, the session accumulates consecutive `assistant`
+ *     messages and every later request fails with HTTP 400 (assistant-prefill). A durable
+ *     session carries 120k+ tokens — corrupting it is a total, unrecoverable loss.
+ *
+ * ✅ THIS plugin is NOT exposed to that: it pings through the SERVER API
+ * (`ctx.client.session.prompt` → POST /session/:id/message), and the server SERIALIZES concurrent
+ * turns on one session. Verified: two simultaneous prompts produced a clean user/assistant/user/
+ * assistant sequence and the session stayed healthy. Corruption is specific to spawning a SECOND
+ * PROCESS, not to concurrency itself. Never route a ping through `opencode run`.
+ *
+ * (Note that ../cache-ttl DOES work in detached runs, because wrapping `fetch` acts during the
+ * request rather than after it.)
  *
  * HOOK CONTRACTS (source @opencode-ai/plugin):
  *     (input: PluginInput, options?: Record<string, unknown>) => Promise<Hooks>
@@ -168,7 +185,10 @@ export const SessionKeepalivePlugin = async (ctx, options) => {
       const read = Number(cache.read ?? 0)
       log(`ping #${s.sent} ${sessionID}: ${read > 0 ? 'HIT' : 'MISS'} read=${read} write=${Number(cache.write ?? 0)}`)
     } catch (err) {
-      // Best-effort: a real turn may be in flight (BusyError), the session may be gone, etc.
+      // Best-effort: the session may be gone, the server down, the model erroring.
+      // NOT a concern here: a real turn being in flight. The server SERIALIZES concurrent prompts
+      // on one session (verified 2026-07-30) — the ping queues behind the real turn and both land
+      // cleanly. That serialization is what makes this plugin safe; see the SCOPE note in the header.
       log(`ping ${sessionID} failed:`, err?.message ?? err)
     } finally {
       s.pinging = false
