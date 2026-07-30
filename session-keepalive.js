@@ -12,7 +12,8 @@
  * 214,936 tokens = US$ 1.34. An 8 min gap cost 162k = US$ 1.01. Every READ renews the TTL —
  * hence the ping.
  *
- * ✅ 1-HOUR TTL — ACTIVE (via the `cache-ttl` plugin, verified 2026-07-30):
+ * ✅ 1-HOUR TTL — ACTIVE, verified 2026-07-30. Provided by the cache-ttl plugin:
+ *     https://github.com/klaveren/opencode-cache-ttl
  *     10:00:54  turn 1 → write 104,743  read       0
  *     10:16:00  turn 2 → write      14  read 104,743   ← 15 min gap: CACHE ALIVE
  * History: the CONFIG route failed twice (provider.options never reaches the request;
@@ -50,8 +51,8 @@
  * assistant sequence and the session stayed healthy. Corruption is specific to spawning a SECOND
  * PROCESS, not to concurrency itself. Never route a ping through `opencode run`.
  *
- * (Note that ../cache-ttl DOES work in detached runs, because wrapping `fetch` acts during the
- * request rather than after it.)
+ * (Note that the cache-ttl plugin DOES work in detached runs, because wrapping `fetch` acts
+ * during the request rather than after it: https://github.com/klaveren/opencode-cache-ttl)
  *
  * HOOK CONTRACTS (source @opencode-ai/plugin):
  *     (input: PluginInput, options?: Record<string, unknown>) => Promise<Hooks>

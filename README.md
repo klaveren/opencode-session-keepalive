@@ -82,9 +82,9 @@ safely inside the window:
 | Provider TTL | Interval | Margin | Pings/hour |
 | --- | --- | --- | --- |
 | 5 min (Anthropic default) | **4.5 min** | 30s for jitter/latency | 13.3 |
-| 1 h (with `cache-ttl`) | **50 min** | 10 min | 1.2 |
+| 1 h (with [`cache-ttl`](https://github.com/klaveren/opencode-cache-ttl)) | **50 min** | 10 min | 1.2 |
 
-That single row is why `cache-ttl` matters so much here: **11× fewer pings for the same coverage.**
+That single row is why [`cache-ttl`](https://github.com/klaveren/opencode-cache-ttl) matters so much here: **11× fewer pings for the same coverage.**
 
 ### Why the window must close — the break-even coefficient
 
