@@ -1,9 +1,34 @@
-# session-keepalive
+# opencode-session-keepalive
 
-> An opencode plugin that keeps idle sessions' prompt caches alive with minimal pings — and knows
-> exactly when to stop, because keeping warm forever costs more than letting the cache die.
+### Going into a meeting costs $1.34. Staying warm through it costs $0.11.
 
-**~200 lines. Zero dependencies. Pure JS.**
+> An opencode plugin that keeps idle sessions' prompt caches alive with minimal no-op pings — and
+> knows **exactly** when to stop, because keeping warm forever costs more than letting the cache die.
+> **~200 lines. Zero dependencies. Pure JS.**
+
+Both numbers are measured, on the same 215k-token session. The break-even between them is not a
+guess or a vibe — it is a division, it is written out below, and it is what `windowMs` encodes.
+
+---
+
+## Is this your problem?
+
+- Your **agent session gets expensive after you walk away** — the cost of resuming looks like
+  starting over
+- You keep a long conversation open all day and the bill does not match the amount of work done
+- A **subagent** or long-running tool left the parent session idle, and picking it back up was billed
+  at full price
+- You have read about prompt caching and want to know **whether keeping a cache warm is actually
+  worth it** — or whether you would just be burning money on pings
+- You already tried a keepalive and are not sure it is paying for itself
+
+That last question is the one this README answers with arithmetic rather than opinion. **Sometimes
+the answer is no** — with a 5-minute TTL, holding a session for one hour costs **$1.40**, more than
+the **$1.34** re-warm it avoids. A keepalive is not free, and this one is built to admit that.
+
+> **The short version:** a cached prefix survives only as long as its TTL past the last read. Walk
+> away and the cache dies; come back and you re-pay the whole history at write price. This plugin
+> pings just under the TTL to keep it alive — and disarms when that stops being the cheaper option.
 
 ---
 
@@ -367,6 +392,32 @@ grep "ping #" server.log
 
 The economics only work if pings register as reads. A ping logging `MISS` with a large `write` means
 the interval is longer than the real TTL — check that `intervalMs` matches your provider's TTL.
+
+---
+
+## Install this one second — the other half comes first
+
+Read the side-by-side table again if you skipped it: **on a 5-minute TTL this plugin cannot pay for
+itself over even a single hour.** Every number in the right-hand column assumes a 1-hour TTL, and
+opencode does not give you one through configuration.
+
+**[opencode-cache-ttl](https://github.com/klaveren/opencode-cache-ttl)** is what provides it — ~120
+lines that stamp `ttl: "1h"` onto the `cache_control` markers opencode already emits, after the two
+obvious config routes turn out to be dead ends (one fails silently, the other returns `HTTP 400`).
+
+| | 5m TTL | 1h TTL (with cache-ttl) |
+| --- | ---: | ---: |
+| hold 1 hour | $1.40 — *more than the re-warm* | **$0.11** |
+| hold 4 hours | $5.70 | **$0.43** |
+| break-even ceiling | ~56 min | **~16.7 h** |
+
+Install `cache-ttl` first, then this. Alone, this is a coffee-break tool. Together they cover
+everything from a short pause to an afternoon away.
+
+Also from the same investigation:
+**[opencode-session-identity](https://github.com/klaveren/opencode-session-identity)** — tells an
+agent its own session id, which is what makes per-session cost measurement possible in the first
+place.
 
 ---
 
