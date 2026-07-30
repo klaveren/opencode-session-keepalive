@@ -1,0 +1,38 @@
+{
+  "name": "opencode-session-keepalive",
+  "version": "1.0.0",
+  "description": "opencode plugin that keeps idle sessions' prompt caches warm with minimal pings, and stops when it stops paying",
+  "type": "module",
+  "main": "./session-keepalive.js",
+  "exports": {
+    ".": "./session-keepalive.js"
+  },
+  "files": [
+    "session-keepalive.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "plugin",
+    "anthropic",
+    "claude",
+    "prompt-cache",
+    "keepalive",
+    "cost-optimization"
+  ],
+  "author": "Henrique Van Klaveren",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/klaveren/opencode-session-keepalive.git"
+  },
+  "bugs": {
+    "url": "https://github.com/klaveren/opencode-session-keepalive/issues"
+  },
+  "homepage": "https://github.com/klaveren/opencode-session-keepalive#readme",
+  "engines": {
+    "node": ">=18"
+  }
+}
