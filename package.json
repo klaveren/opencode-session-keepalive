@@ -1,6 +1,6 @@
 {
   "name": "opencode-session-keepalive",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "opencode plugin that keeps idle sessions' prompt caches warm with minimal pings, and stops when it stops paying",
   "type": "module",
   "main": "./session-keepalive.js",
