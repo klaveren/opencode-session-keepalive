@@ -32,6 +32,9 @@
     "url": "https://github.com/klaveren/opencode-session-keepalive/issues"
   },
   "homepage": "https://github.com/klaveren/opencode-session-keepalive#readme",
+  "scripts": {
+    "test": "node --test"
+  },
   "engines": {
     "node": ">=18"
   }
